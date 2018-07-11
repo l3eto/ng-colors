@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Example - example-ngControllerAs-production</title>
   <script src="https://code.angularjs.org/snapshot/angular.min.js"></script>
   <style>
@@ -21,62 +22,93 @@
       display: inline-block;
       position: relative;
     }
-    .main .top,
-    .main .bottom {
+    .main .controls,
+    .main .options {
       width: 100%;
       height: 50%;
     }
-    .main .bottom {
-      white-space: nowrap;
+    .main .options,
+    .main .controls {
+      display: flex;
     }
-    .main .bottom .left,
-    .main .bottom .right {
-      width: 50%;
+    .main .options .option,
+    .main .controls .control {
+      flex: 1;
+    }
+    .main .options .option .container-option,
+    .main .controls .control .container-control {
+      width: 100%;
       height: 100%;
-      display: inline-block;
-      white-space: normal;
-    }
-    .red {
-      background-color: red;
-      opacity: .4;
-    }
-    .green {
-      background-color: green;
-      opacity: .4;
-    }
-    .blue {
-      background-color: blue;
-      opacity: .4;
     }
   </style>
 </head>
 <body ng-app="app">
-  <div ng-controller="ControllerApp as controller" ng-init="controller.init()">
-    <div class="main">
-      <div class="container-main">
-        <div class="top {{controller.color.top}}" ng-click="controller.top()">
-          <div class="container-top">
-          </div>
+  <div ng-controller="ControllerApp as controller">
+
+    <div ng-show="controller.step == 0" class="main">
+      <h2>Menú</h2>
+      <br />
+      <input type="button" ng-click="controller.start()" value="Start game" />
+      <br /><br />
+      <input type="button" ng-click="controller.configure()" value="Configuration" />
+    </div>
+
+    <div ng-show="controller.step == 1" class="main">
+      <div>
+        <h2>Game Info</h2>
+        <h5>Level: {{controller.level}}</h5>
+        <h5>Time: {{controller.seconds}} seconds</h5>
+        <br />
+        <div ng-show="controller.debug">
+          <h5>Answer: {{controller.option}}</h5>
+          <h5>Playing: {{controller.playing}}</h5>
         </div>
-        <div class="bottom" ng-show="controller.level>1">
-          <div class="left {{controller.color.left}}" ng-click="controller.left()">
-            <div class="container-left">
+      </div>
+      <div class="container-main">
+        <div class="controls">
+          <div ng-repeat="control in controller.controls" class="control" ng-click="controller.setControl(control)">
+            <div class="container-control" style="background-color: {{controller.color[control]}}">
             </div>
           </div>
-          <div class="right {{controller.color.right}}" ng-click="controller.right()">
-            <div class="container-right">
+        </div>
+        <div class="options" ng-show="controller.level>1">
+          <div ng-repeat="option in controller.options" class="option" ng-click="controller.setOption(option)">
+            <div class="container-option" style="background-color: {{controller.color[option]}}">
             </div>
           </div>
         </div>
       </div>
+      <div>
+        <input type="button" ng-hide="controller.configuration" ng-click="controller.end()" value="End Game" />
+      </div>
     </div>
-    <div>
-      <p>Test Parameters:</p>
-      <hr>
-      <p>Level: {{controller.level}}</p>
-      <p>Option: {{controller.option}}</p>
-      <p>Seconds: {{controller.seconds}}</p>
-      <p>Processing: {{controller.processing}}</p>
+
+    <div ng-show="controller.step == 2">
+      <h2>Configuración</h2>
+      <br />
+      <p>Listado de opciones</p>
+      <p ng-repeat="option in controller.options">{{option}}&nbsp;<input type="button" ng-click="controller.removeOption($index)" value="quitar"></p>
+      <input type="text" ng-model="controller.newOption" ng-value="controller.newOption" placeholder="new option" />
+      <input type="button" ng-click="controller.addOption()" value="añadir" />
+      <br /><br />
+      <p>Listado de colores(css name color)</p>
+      <p ng-repeat="color in controller.colors">{{color}}&nbsp;<input type="button" ng-click="controller.removeColor($index)" value="quitar"></p>
+      <input type="text" ng-model="controller.newColor" ng-value="controller.newColor" placeholder="new color" />
+      <input type="button" ng-click="controller.addColor()" value="añadir" />
+      <br /><br />
+      <input type="button" ng-hide="controller.debug" ng-click="controller.setDebugMode(true)" value="Activar Debug Mode" />
+      <input type="button" ng-show="controller.debug" ng-click="controller.setDebugMode(false)" value="Desactivar Debug Mode" />
+      <br /><br />
+      <input type="button" ng-click="controller.main()" value="Volver" />
+    </div>
+
+    <div ng-show="controller.step == 3">
+      <h2>Game Over</h2>
+      <br />
+      <h2>Level: {{controller.level}}</h2>
+      <h2>Time: {{controller.seconds}} seconds</h2>
+      <br />
+      <input type="button" ng-click="controller.start()" value="Play again" />
     </div>
   </div>
 
@@ -87,62 +119,131 @@
 angular.module('app', []).controller('ControllerApp', ControllerApp);
 
 function ControllerApp($scope) {
-/*this.scope = angular.element(document.querySelector('body')).scope();*/
   this.scope = $scope;
-  this.colors = ['red','green','blue'];
-  this.options = ['left','right'];
+  this.control = 0;
+  this.controls = ['CONTROL1'];
+  this.colors = ['#F00','#0F0','#00F'];
+  this.options = ['BUTTON1','BUTTON2'];
+  this.option = null;
   this.color = {};
   this.processing = false;
+  this.playing = false;
+  this.configuration = true;
+  this.debug = true;
+  this.newOption = 'newOption';
+  this.newColor = 'newColor';
+  this.step = 0;
+}
+ControllerApp.prototype.main = function() {
+  this.step = 0;
+}
+ControllerApp.prototype.setDebugMode = function(bool) {
+  this.debug = bool;
+}
+ControllerApp.prototype.addColor = function() {
+  var index = this.options.indexOf(this.newColor);
+  if (index < 0) {
+    this.colors.push(this.newColor);
+  } else {
+    alert('already exist');
+  }
+}
+ControllerApp.prototype.removeColor = function(index) {
+  this.colors.splice(index, 1);
+}
+ControllerApp.prototype.addOption = function() {
+  var index = this.options.indexOf(this.newOption);
+  if (index < 0) {
+    this.options.push(this.newOption);
+  } else {
+    alert('already exist');
+  }
+}
+ControllerApp.prototype.removeOption = function(index) {
+  this.options.splice(index, 1);
+}
+ControllerApp.prototype.configure = function() {
+  this.step = 2;
+}
+ControllerApp.prototype.start = function() {
+  this.step = 1;
+  if (this.colors.length < this.options.length) {
+    alert('error configuración del juego');
+    return;
+  }
+  this.configuration = false;
+  this.init();
+}
+ControllerApp.prototype.end = function() {
+  this.step = 3;
+  this.processing = false;
+  this.configuration = true;
+  this.playing = false;
+  this.level = 0;
+  this.color = {};
+  this.option = null;
+  clearInterval(this.watcher);
 }
 
 ControllerApp.prototype.init = function() {
   this.level = 1;
   this.seconds = 0;
-  this.option = 'top';
-  this.color.top = this.rndColor();
+  this.color[this.controls[this.control]] = this.rnd(this.colors);
   this.processing = false;
 }
-ControllerApp.prototype.top = function() {
+ControllerApp.prototype.setControl = function(control) {
   if (!this.processing) {
     this.processing = true;
-    if (this.option=='top') {
+    if (this.level==1) {
       this.gameStart();
     }
   }
 };
-ControllerApp.prototype.left = function() {
+ControllerApp.prototype.setOption = function(option) {
   if (!this.processing) {
     this.processing = true;
-    if (this.option=='left') {
-      this.levelUp();
-    } else {
-      this.gameOver();
-    }
-  }
-}
-ControllerApp.prototype.right = function() {
-  if (!this.processing) {
-    this.processing = true;
-    if (this.option=='right') {
-      this.levelUp();
-    } else {
-      this.gameOver();
+    if (this.level>1) {
+      if (this.option==option) {
+        this.levelUp();
+      } else {
+        this.gameOver();
+      }
     }
   }
 }
 ControllerApp.prototype.levelUp = function() {
   this.level++;
-  this.option = this.rndOption();
-  this.color[this.option] = this.color.top;
-  if (this.option=='left') {
-    this.color.right = this.rndColor(this.color.top);
-  } else if (this.option=='right') {
-    this.color.left = this.rndColor(this.color.top);
-  }
-  this.color.top = this.rndColor();
+  this.option = this.rnd(this.options);
+  var color = this.color[this.controls[this.control]];
+  this.setOptionColors(color);
+  this.setOptionControl();
   this.processing = false;
 }
+ControllerApp.prototype.setOptionControl = function() {
+  this.color[this.controls[this.control]] = this.rnd(this.colors);
+}
+ControllerApp.prototype.setOptionColors = function(color) {
+  var exceptions = [];
+  this.color[this.option] = color;
+  exceptions.push(color);
+  this.setOptionColor(0, exceptions);
+}
+ControllerApp.prototype.setOptionColor = function(i, exceptions) {
+  if (i < this.options.length) {
+    if (this.options[i]!=this.option) {
+      this.setColor(i, this.rndExceptions(this.colors, exceptions), exceptions);
+    } else {
+      this.setOptionColor(i+1, exceptions);
+    }
+  }
+}
+ControllerApp.prototype.setColor = function(i, color, exceptions) {
+  this.color[this.options[i]] = color;
+  exceptions.push(color);
+  this.setOptionColor(i+1, exceptions);
+}
 ControllerApp.prototype.gameStart = function() {
+  this.playing = true;
   this.startDate = new Date().getTime();
   this.watcher = setInterval(this.setSeconds.bind(this), 100);
   this.levelUp();
@@ -154,22 +255,21 @@ ControllerApp.prototype.setSeconds = function() {
 }
 ControllerApp.prototype.gameOver = function() {
   this.processing = true;
+  this.playing = false;
   clearInterval(this.watcher);
-  alert('end');
-  this.init();
+  // alert('restarting...');
+  //this.init();
+  this.step = 3;
 }
-ControllerApp.prototype.rndColor = function(oldColor) {
-  var newColor = this.rnd('colors');
-  if (oldColor && oldColor == newColor) {
-    return this.rndColor(oldColor);
-  }
-  return newColor;
-};
-ControllerApp.prototype.rndOption = function() {
-  return this.rnd('options');
+ControllerApp.prototype.rndExceptions = function(array, exceptions) {
+  var arr = array.filter(function(el) {
+    return exceptions.indexOf(el) < 0;
+  });
+  var rnd = this.rnd(arr);
+  return rnd;
 };
 ControllerApp.prototype.rnd = function(arr) {
-  return this[arr][Math.floor(Math.random()*this[arr].length)];
+  return arr[Math.floor(Math.random()*arr.length)];
 };
 
 
